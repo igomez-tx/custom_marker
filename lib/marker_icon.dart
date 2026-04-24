@@ -9,7 +9,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MarkerIcon {
@@ -19,19 +18,15 @@ class MarkerIcon {
     required double size,
   }) async {
     final mediaQuery = MediaQuery.of(context);
-    // Read SVG file as String
     String svgString = await DefaultAssetBundle.of(context).loadString(assetName);
-    // Create DrawableRoot from SVG String
-    final PictureInfo pictureInfo = await vg.loadPicture(SvgStringLoader(svgString), null);
+    final PictureInfo pictureInfo = await vg.loadPicture(
+      SvgStringLoader(svgString),
+      null,
+    );
 
-    // toPicture() and toImage() don't seem to be pixel ratio aware, so we calculate the actual sizes here
     double devicePixelRatio = mediaQuery.devicePixelRatio;
-    double width = size * devicePixelRatio; // where 32 is your SVG's original width
-    double height = size * devicePixelRatio; // same thing
-    // Convert to ui.Picture
-    // Convert to ui.Image. toImage() takes width and height as parameters
-    // you need to find the best size to suit your needs and take into account the
-    // screen DPI
+    double width = size * devicePixelRatio;
+    double height = size * devicePixelRatio;
     ui.Image image = await pictureInfo.picture.toImage(width.toInt(), height.toInt());
     ByteData? bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
@@ -205,9 +200,9 @@ class MarkerIcon {
     return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
   }
 
-  static Future<BitmapDescriptor> widgetToIcon(GlobalKey globalKey) async {
+  static Future<BitmapDescriptor> widgetToIcon(GlobalKey globalKey, {double pixelRatio = 1.0}) async {
     RenderRepaintBoundary boundary = globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
-    ui.Image image = await boundary.toImage();
+    ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
     ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
   }
